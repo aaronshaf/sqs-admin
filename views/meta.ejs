@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <% include ./partials/head %>
+</head>
+<body class='container-fluid'>
+  <header>
+    <nav class='navbar navbar-fixed-top navbar-light bg-faded'>
+      <div class="nav navbar-nav">
+        <a class='navbar-brand' href='/'>SQS Admin</a>
+        <a class='nav-item nav-link' href='/'>
+          Queues
+        </a>
+      </div>
+      <% include ./partials/right-nav %>
+    </nav>
+
+    <ol class='breadcrumb'>
+      <a class='breadcrumb-item' href='/'>Home</a>
+      <a class='breadcrumb-item active'><%= Queue.QueueName %></a>
+    </ol>
+
+    <ul class='nav nav-tabs'>
+      <li class='nav-item'>
+        <a class='nav-link' href='/queues/<%= Queue.QueueName %>'>
+          Messages (<%= Queue.Attributes.ApproximateNumberOfMessages %>)
+        </a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link active' href='/queues/<%= Queue.QueueName %>/meta'>Meta</a>
+      </li>
+    </ul>
+  </header>
+
+  <main>
+    <div style="margin-top: 16px; margin-bottom: 16px;">
+      <pre><%= JSON.stringify(Queue.Attributes, null, 2) %></pre>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <button id="deleteQueue" type="button" class="btn btn-danger">Delete queue</button>
+      <script>
+      document.querySelector('#deleteQueue').addEventListener('click', () => {
+        fetch('/queues/<%= Queue.QueueName %>', {
+          method: 'delete'
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error
+          }
+          window.location.href = '/'
+        }).catch(() => {
+          window.alert('There was an error when attempting to delete the queue.')
+        })
+      })
+      </script>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <% include ./partials/head %>
+</head>
+<body class='container-fluid'>
+  <header>
+    <nav class='navbar navbar-fixed-top navbar-light bg-faded'>
+      <div class="nav navbar-nav">
+        <a class='navbar-brand' href='/'>SQS Admin</a>
+        <a class='nav-item nav-link' href='/'>
+          Queues
+        </a>
+      </div>
+      <% include ./partials/right-nav %>
+    </nav>
+
+    <ol class='breadcrumb'>
+      <a class='breadcrumb-item' href='/'>Home</a>
+      <a class='breadcrumb-item active'><%= Queue.QueueName %></a>
+    </ol>
+
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link active" href="/queues/<%= Queue.QueueName %>">
+          Messages (<%= Queue.Attributes.ApproximateNumberOfMessages %>)
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/queues/<%= Queue.QueueName %>/meta">Meta</a>
+      </li>
+    </ul>
+  </header>
+
+  <main>
+    <queue class="queue">
+      <tbody>
+        <% for(var i = 0; i < (Queue.Messages || []).length; i++) { %>
+          <tr>
+            <td><pre><%= JSON.stringify(Object.assign({}, Queue.Messages[i]), null, 2) %></pre></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </queue>
+  </main>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <% include ./partials/head %>
+</head>
+<body class='container-fluid'>
+  <header>
+    <nav class='navbar navbar-fixed-top navbar-light bg-faded'>
+      <div class="nav navbar-nav">
+        <a class='navbar-brand' href='/'>SQS Admin</a>
+        <a class='nav-item nav-link active' href='/'>
+          Queues
+        </a>
+      </div>
+      <% include ./partials/right-nav %>
+    </nav>
+  </header>
+
+  <main>
+    <script>
+    function deleteQueue (QueueName) {
+      fetch(`/queues/${QueueName}`, {
+        method: 'delete'
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error
+        }
+        window.location.href = '/'
+      }).catch(() => {
+        window.alert('There was an error when attempting to delete the queue.')
+      })
+    }
+
+
+    function purgeQueue (QueueName) {
+      fetch(`/queues/${QueueName}/messages`, {
+        method: 'delete'
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error
+        }
+        window.location.href = '/'
+      }).catch(() => {
+        window.alert('There was an error when attempting to purge the queue.')
+      })
+    }
+    </script>
+    <ul class="list-group">
+      <% for(var i = 0; i < data.length; i++) { %>
+        <li class="list-group-item">
+          <a href='/queues/<%= data[i].QueueName %>'>
+            <%= data[i].QueueName %>
+          </a>
+          <a href="/" onClick="deleteQueue('<%= data[i].QueueName %>')" class="tag tag-danger tag-pill pull-xs-right" style="margin-left: 8px;">
+            Delete
+          </a>
+          <a href="/" onClick="purgeQueue('<%= data[i].QueueName %>')" class="tag tag-info tag-pill pull-xs-right" style="margin-left: 8px;">
+            Purge
+          </a>
+          <span class="tag tag-default tag-pill pull-xs-right">
+            <%= data[i].Attributes.ApproximateNumberOfMessages %>
+          </span>
+        </li>
+      <% } %>
+    </ul>
+  </main>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "sqs-admin",
+  "version": "1.0.0",
+  "description": "GUI for SQS. Useful for local development.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaronshaf/sqs-admin.git"
+  },
+  "keywords": [
+    "SQS",
+    "AWS"
+  ],
+  "author": "Aaron Shafovaloff <aaronshaf@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aaronshaf/sqs-admin/issues"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.5.0",
+    "body-parser": "^1.15.2",
+    "ejs": "^2.5.1",
+    "errorhandler": "^1.4.3",
+    "es6-promisify": "^4.1.0",
+    "es7-object-polyfill": "0.0.1",
+    "express": "^4.14.0"
+  },
+  "homepage": "https://github.com/aaronshaf/sqs-admin#readme"
+}
