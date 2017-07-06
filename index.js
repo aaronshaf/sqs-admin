@@ -1,21 +1,15 @@
-const express = require('express')
-const AWS = require('aws-sdk')
-const promisify = require('es6-promisify')
-const path = require('path')
-const errorhandler = require('errorhandler')
-const bodyParser = require('body-parser')
-
-require('es7-object-polyfill')
-
 if (process.env.NODE_ENV === 'production') {
   console.error('\x1b[31mDo not run this in production!') // red
   process.exit(1)
 }
 
+const express = require('express')
 const app = express()
-app.set('json spaces', 2)
-app.set('view engine', 'ejs')
-app.set('views', path.resolve(__dirname, 'views'))
+const AWS = require('aws-sdk')
+const path = require('path')
+const errorhandler = require('errorhandler')
+require('es7-object-polyfill')
+
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'key',
@@ -24,95 +18,79 @@ AWS.config.update({
   sslEnabled: process.env.SQS_ENDPOINT && process.env.SQS_ENDPOINT.indexOf('https://') === 0,
   region: process.env.AWS_REGION || 'us-east-1'
 })
-
 const sqs = new AWS.SQS()
+
+app.set('json spaces', 2)
+app.set('view engine', 'ejs')
+app.set('views', path.resolve(__dirname, 'views'))
 
 app.use(errorhandler())
 app.use('/assets', express.static(path.join(__dirname, '/public')))
 
-app.get('/', (req, res, next) => {
-  sqs.listQueues({}).promise()
-  .then((data) => {
-    const promises = (data.QueueUrls || []).map((QueueUrl) => {
-      return sqs.getQueueAttributes({QueueUrl, AttributeNames: ['All']}).promise()
-      .then((response) => {
-        const arnParts = response.Attributes.QueueArn.split(':')
-        return Object.assign({}, response, {
-          QueueUrl,
-          QueueName: arnParts[arnParts.length - 1]
-        })
-      })
+app.get('/', async (req, res, next) => {
+  try{
+    const {QueueUrls = []} = await sqs.listQueues({}).promise()
+    const promises = QueueUrls.map(async (QueueUrl) => {
+      const {Attributes} = await sqs.getQueueAttributes({QueueUrl, AttributeNames: ['All']}).promise()
+      const arnParts = Attributes.QueueArn.split(':')
+      return {
+        Attributes,
+        QueueUrl,
+        QueueName: arnParts[arnParts.length - 1]
+      }
     })
-    return Promise.all(promises).then((data) => {
-      res.render('queues', {data})
-    })
-  })
-  .catch(next)
+    res.render('queues', {Queues: await Promise.all(promises)})
+  }catch(err){
+    next(err)
+  }
 })
 
-app.get('/queues/:QueueName', (req, res, next) => {
-  sqs.getQueueUrl({ QueueName: req.params.QueueName }).promise()
-  .then((response) => {
-    return sqs.getQueueAttributes({
-      QueueUrl: response.QueueUrl,
-      AttributeNames: ['All']
-    }).promise()
-    .then((attributes) => {
-      return sqs.receiveMessage({
-        QueueUrl: response.QueueUrl,
-        AttributeNames: ['All'],
-        MaxNumberOfMessages: 10
-      }).promise().then((response) => {
-        const Queue = Object.assign({}, {
-          QueueName: req.params.QueueName,
-        }, attributes, response)
-        res.render('messages', {Queue})
-      })
-    })
-  })
-  .catch(next)
+app.get('/queues/:QueueName', async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    const {Attributes} = await sqs.getQueueAttributes({QueueUrl, AttributeNames: ['All']}).promise()
+    const {Messages} = await sqs.receiveMessage({QueueUrl, AttributeNames: ['All'], MaxNumberOfMessages: 10}).promise()
+    res.render('messages', {Queue: {QueueName, Attributes, Messages}})
+  }catch(err){
+    next(err)
+  }
 })
 
-app.get('/queues/:QueueName/meta', (req, res, next) => {
-  sqs.getQueueUrl({ QueueName: req.params.QueueName }).promise()
-  .then((response) => {
-    return sqs.getQueueAttributes({
-      QueueUrl: response.QueueUrl,
-      AttributeNames: ['All']
-    }).promise()
-  })
-  .then((response) => {
-    const Queue = Object.assign({}, {
-      QueueName: req.params.QueueName
-    }, response)
-    res.render('meta', {Queue})
-  })
-  .catch(next)
+app.get('/queues/:QueueName/meta', async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    const {Attributes} = await sqs.getQueueAttributes({QueueUrl, AttributeNames: ['All']}).promise()
+    res.render('meta', {Queue: {QueueName, Attributes}})
+  }catch(err){
+    next(err)
+  }
 })
 
-app.delete('/queues/:QueueName/messages', (req, res, next) => {
-  sqs.getQueueUrl({ QueueName: req.params.QueueName }).promise()
-  .then((response) => {
-    return sqs.purgeQueue({ QueueUrl: response.QueueUrl }).promise()
-  })
-  .then((response) => {
+app.delete('/queues/:QueueName/messages', async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    await sqs.purgeQueue({QueueUrl}).promise()
     res.status(204).end()
-  })
-  .catch(next)
+  }catch(err){
+    next(err)
+  }
 })
 
-app.delete('/queues/:QueueName', (req, res, next) => {
-  sqs.getQueueUrl({ QueueName: req.params.QueueName }).promise()
-  .then((response) => {
-    return sqs.deleteQueue({ QueueUrl: response.QueueUrl }).promise()
-  })
-  .then((response) => {
+app.delete('/queues/:QueueName', async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    await sqs.deleteQueue({QueueUrl}).promise()
     res.status(204).end()
-  })
-  .catch(next)
+  }catch(err){
+    next(err)
+  }
 })
 
-const port = process.env.PORT || 8002
+const port = process.env.SQS_ADMIN_PORT || 8002
 app.listen(port, () => {
-  console.log(`sqs-admin listening on port ${port}`)
+  console.log(`sqs-admin listening on port http://127.0.0.1:${port}`)
 })
