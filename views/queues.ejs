@@ -46,19 +46,19 @@
     }
     </script>
     <ul class="list-group">
-      <% for(var i = 0; i < data.length; i++) { %>
+      <% for(var i = 0; i < Queues.length; i++) { %>
         <li class="list-group-item">
-          <a href='/queues/<%= data[i].QueueName %>'>
-            <%= data[i].QueueName %>
+          <a href='/queues/<%= Queues[i].QueueName %>'>
+            <%= Queues[i].QueueName %>
           </a>
-          <a href="/" onClick="deleteQueue('<%= data[i].QueueName %>')" class="tag tag-danger tag-pill pull-xs-right" style="margin-left: 8px;">
+          <a href="/" onClick="deleteQueue('<%= Queues[i].QueueName %>')" class="tag tag-danger tag-pill pull-xs-right" style="margin-left: 8px;">
             Delete
           </a>
-          <a href="/" onClick="purgeQueue('<%= data[i].QueueName %>')" class="tag tag-info tag-pill pull-xs-right" style="margin-left: 8px;">
+          <a href="/" onClick="purgeQueue('<%= Queues[i].QueueName %>')" class="tag tag-info tag-pill pull-xs-right" style="margin-left: 8px;">
             Purge
           </a>
           <span class="tag tag-default tag-pill pull-xs-right">
-            <%= data[i].Attributes.ApproximateNumberOfMessages %>
+            <%= Queues[i].Attributes.ApproximateNumberOfMessages %>
           </span>
         </li>
       <% } %>
